@@ -5,9 +5,14 @@ from flask_cors import CORS
 import random
 
 from models import setup_db, Question, Category
-
 QUESTIONS_PER_PAGE = 10
 
+def check_question_exist(current_question,previous_questions,questions):
+    if current_question.id in previous_questions:
+        current_question = questions[random.randint(0, len(questions) - 1)]
+        check_question_exist(current_question,previous_questions,questions)
+
+    return current_question
 
 def paginate_questions(request, selection):
     page = request.args.get('page', 1, type=int)
@@ -145,30 +150,23 @@ def create_app(test_config=None):
     @app.route('/quizzes', methods=['POST'])
     def create_quiz():
         body = request.get_json()
-        quiz_category = body.get('quiz_category', None)
+        category = body.get('quiz_category', None)
         previous_questions = body.get('previous_questions', None)
 
-        if quiz_category is None:
+        if category is None:
             abort(404)
 
-        if quiz_category['id'] == 0:
+        if category['id'] == 0:
             questions = Question.query.all()
         else:
-            questions = Question.query.filter_by(category=quiz_category['id']).all()
+            questions = Question.query.filter_by(category=category['id']).all()
 
-        def generate_random_questions():
-            return questions[random.randint(0, len(questions) - 1)]
+        current_question = questions[random.randint(0, len(questions) - 1)]
+        current_question = check_question_exist(current_question,previous_questions,questions)
 
-        current_questions = generate_random_questions()
-        exist = True
-        while exist:
-            if current_questions.id in previous_questions:
-                current_questions = generate_random_questions()
-            else:
-                exist = False
         return jsonify({
             'success': True,
-            'question': current_questions.format()
+            'question': current_question.format()
 
         })
 
