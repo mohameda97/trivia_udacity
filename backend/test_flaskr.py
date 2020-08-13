@@ -49,6 +49,14 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], True)
         self.assertTrue(data['categories'])
 
+    def test_get_categories_failures(self):
+        res = self.client().get('/categories')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 404)
+        self.assertEqual(data['success'], False)
+        self.assertEqual(data['message'], 'resource not found')
+
 
     def test_get_paginated_questions(self):
         res = self.client().get('/questions')
@@ -153,15 +161,10 @@ class TriviaTestCase(unittest.TestCase):
 
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'],True)
-        self.assertTrue(len(data['questions']))
+        self.assertTrue(len(data['question']))
 
     def test_failed_to_create_quiz(self):
-        res = self.client().post('/quizzes',json={
-            'previous_questions': [1],
-            'quiz_category': {
-                'id':1000,
-            }
-        })
+        res = self.client().post('/quizzes',json={})
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 404)
