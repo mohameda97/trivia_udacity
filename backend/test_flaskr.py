@@ -81,7 +81,7 @@ class TriviaTestCase(unittest.TestCase):
 
 
     def test_delete_question(self):
-        res = self.client().delete('/questions/5')
+        res = self.client().delete('/questions/6')
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 200)
@@ -171,6 +171,17 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], False)
         self.assertEqual(data['message'], 'resource not found')
 
+    def test_failed_create_due_number_of_questions(self):
+        res = self.client().post('/quizzes',json={
+            'previous_questions': [1],
+            'quiz_category': {
+                'id':3,
+            }})
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 400)
+        self.assertEqual(data['success'], False)
+        self.assertEqual(data['message'], 'bad request')
 
 # Make the tests conveniently executable
 if __name__ == "__main__":

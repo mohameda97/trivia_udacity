@@ -3,16 +3,20 @@ from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 import random
+import sys
 
 from models import setup_db, Question, Category
+
 QUESTIONS_PER_PAGE = 10
 
-def check_question_exist(current_question,previous_questions,questions):
+
+def check_question_exist(current_question, previous_questions, questions):
     if current_question.id in previous_questions:
         current_question = questions[random.randint(0, len(questions) - 1)]
-        check_question_exist(current_question,previous_questions,questions)
+        check_question_exist(current_question, previous_questions, questions)
 
     return current_question
+
 
 def paginate_questions(request, selection):
     page = request.args.get('page', 1, type=int)
@@ -161,8 +165,11 @@ def create_app(test_config=None):
         else:
             questions = Question.query.filter_by(category=category['id']).all()
 
+        if len(questions) < 6:  # number of questions due to quiz should be 5
+            abort(400)
         current_question = questions[random.randint(0, len(questions) - 1)]
-        current_question = check_question_exist(current_question,previous_questions,questions)
+
+        current_question = check_question_exist(current_question, previous_questions, questions)
 
         return jsonify({
             'success': True,
@@ -185,5 +192,13 @@ def create_app(test_config=None):
             "error": 422,
             "message": "unprocessable"
         }), 422
+
+    @app.errorhandler(400)
+    def bad_request(error):
+        return jsonify({
+            "success": False,
+            "error": 400,
+            "message": "bad request"
+        }), 400
 
     return app
